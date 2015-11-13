@@ -27,14 +27,21 @@ class SpotifySearcher(object):
         self.artists = []
         self.albums = []
         self.playlists = []
-        self.currentSpotify = {}
 
+    def search(self, search_string, search_type, limit):
+        self.reset()
+        if limit < 0:
+            limit = 0
+            print "**Limit values must be greater than 0**\n"
+        if limit > 50:
+            limit = 50
+            print "**Limit values must be less than 50**\n"
+        url = "https://api.spotify.com/v1/search?q=%s&type=%s&market=US&limit=%d" % (search_string, search_type, limit)
+        return json.loads(urllib2.urlopen(url).read())
 
     def find_tracks(self, request, limit=10):
-        search_string = request.replace(' ', '+')
-        print "\nSearching Spotify Tracks for: " + search_string
-        url = "https://api.spotify.com/v1/search?q=" + search_string+ "&type=track&market=US&limit=%d" % limit
-        data = json.loads(urllib2.urlopen(url).read())
+        print "\nSearching top %d tracks on Spotify for: %s\n" % (limit, request)
+        data = self.search(request.replace(' ', '+'), "track", limit)
         if 'tracks' in data:
             tracks = []
             for track in data['tracks']['items']:
@@ -44,12 +51,11 @@ class SpotifySearcher(object):
                             track['explicit'], track['preview_url'], track['track_number'], track['disc_number'], track['href'],
                             track['artists'], track['duration_ms'], track['external_ids'], track['type'], track['id'], track['available_markets'])
                 self.tracks.append(newTrack)
+        print "%d tracks found for: %s" % (len(self.tracks), request)
 
     def find_artists(self, request, limit=10):
-        search_string = request.replace(' ', '+')
-        print "\nSearching Spotify Artists for: " + search_string
-        url = "https://api.spotify.com/v1/search?q=" + search_string+ "&type=artist&market=US&limit=%d" % limit
-        data = json.loads(urllib2.urlopen(url).read())
+        print "\nSearching top %d artists on Spotify for: %s\n" % (limit, request)
+        data = self.search(request.replace(' ', '+'), "artist", limit)
         if 'artists' in data:
             artists = []
             for artist in data['artists']['items']:
@@ -58,12 +64,11 @@ class SpotifySearcher(object):
                 newArtist = Artist(artist['genres'], artist['name'], artist['external_urls'], artist['popularity'], artist['uri'], artist['href'],
                             artist['followers'], artist['images'], artist['type'], artist['id'])
                 self.artists.append(newArtist)
+        print "%d artists found for: %s" % (len(self.artists), request)
 
     def find_albums(self, request, limit=10):
-        search_string = request.replace(' ', '+')
-        print "\nSearching Spotify Albums for: " + search_string
-        url = "https://api.spotify.com/v1/search?q=" + search_string+ "&type=album&market=US&limit=%d" % limit
-        data = json.loads(urllib2.urlopen(url).read())
+        print "\nSearching top %d albums on Spotify for: %s\n" % (limit, request)
+        data = self.search(request.replace(' ', '+'), "album", limit)
         if 'albums' in data:
             albums = []
             for album in data['albums']['items']:
@@ -72,13 +77,12 @@ class SpotifySearcher(object):
                 newAlbum = Album(album['album_type'], album['name'], album['external_urls'], album['uri'], album['href'],
                             album['images'], album['type'], album['id'], album['available_markets'])
                 self.albums.append(newAlbum)
+        print "%d albums found for: %s" % (len(self.albums), request)
 
 
     def find_playlists(self, request, limit=10):
-        search_string = request.replace(' ', '+')
-        print "\nSearching Spotify Playlists for: " + search_string
-        url = "https://api.spotify.com/v1/search?q=" + search_string+ "&type=playlist&market=US&limit=%d" % limit
-        data = json.loads(urllib2.urlopen(url).read())
+        print "\nSearching top %d playlists on Spotify for: %s\n" % (limit, request)
+        data = self.search(request.replace(' ', '+'), "playlist", limit)
         if 'playlists' in data:
             playlists = []
             for playlist in data['playlists']['items']:
@@ -87,6 +91,7 @@ class SpotifySearcher(object):
                 newPlaylist = Playlist(playlist['name'], playlist['collaborative'], playlist['external_urls'], playlist['uri'], playlist['public'],
                             playlist['owner'], playlist['tracks'], playlist['href'], playlist['snapshot_id'], playlist['images'], playlist['type'], playlist['id'])
                 self.playlists.append(newPlaylist)
+        print "%d playlists found for: %s" % (len(self.playlists), request)
 
     def reset(self):
         self.__init__()
